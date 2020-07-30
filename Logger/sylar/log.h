@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <time.h>
 
 namespace sylar
 {
@@ -19,7 +20,8 @@ class LogEvent
 {
 	public:
 		typedef std::shared_ptr<LogEvent> ptr;
-		LogEvent( );
+		LogEvent(const char* file, int32_t line, uint32_t elapse
+				,uint32_t thread_id, uint32_t fiber_id, uint64_t time);
 
 		const char* getFile() const { return m_file; }
 		int32_t getLine() const { return m_line; }
@@ -27,7 +29,9 @@ class LogEvent
 		uint32_t getThreadId() const { return m_threadId; }
 		uint32_t getFiberId() const { return m_fiberId; }
 		uint64_t getTime() const { return m_time; }
-		const std::string& getContent() const { return m_content; }
+		std::string getContent() const { return m_ss.str(); }
+
+		std::stringstream& getSS()  { return m_ss; }
 	private:
 		const char * m_file = nullptr;  //文件名
 		int32_t m_line = 0;         //行号
@@ -35,7 +39,7 @@ class LogEvent
 		uint32_t m_threadId = 0;     //线程 id
 		uint32_t m_fiberId = 0;       //协程  id
 		uint64_t m_time;             //时戳
-		std::string m_content;        //消息
+		std::stringstream m_ss;       //消息
 
 };
 
@@ -63,6 +67,8 @@ class LogFormatter
 {
 public:
 	typedef std::shared_ptr<LogFormatter> ptr;
+
+	LogFormatter(const std::string& pattern);
 
 	std::string format(LogEvent::ptr event);
 
@@ -98,7 +104,7 @@ class LogAppender
 		void setFormatter(LogFormatter::ptr val) {m_formatter = val; }
 		LogFormatter::ptr getFormatter( ) const {  return m_formatter; }
 	protected:
-		LogLevel::Level m_level;
+		LogLevel::Level m_level = LogLevel::DEBUG;
 		LogFormatter::ptr m_formatter;
 
 
@@ -134,7 +140,7 @@ class Logger : public std::enable_shared_from_this<Logger>
 		std::string m_name;    //日志名称
 		LogLevel::Level m_level;  //满足日志级别的会输出
 		std::list<LogAppender::ptr> m_appenders;  //Appeder 集合
-
+		LogFormatter::ptr m_formatter;
 
 };
 

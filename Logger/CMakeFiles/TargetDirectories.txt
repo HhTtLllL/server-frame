@@ -1,0 +1,4 @@
+/home/tt/server-frame/Logger/CMakeFiles/rebuild_cache.dir
+/home/tt/server-frame/Logger/CMakeFiles/edit_cache.dir
+/home/tt/server-frame/Logger/CMakeFiles/sylar.dir
+/home/tt/server-frame/Logger/CMakeFiles/test.dir

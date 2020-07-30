@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/tt/server-frame/Logger/sylar/log.cpp
+log.h
+/home/tt/server-frame/Logger/sylar/log.h
+map
+-
+iostream
+-
+functional
+-
+
+/home/tt/server-frame/Logger/sylar/log.h
+string
+-
+stdint.h
+-
+memory
+-
+list
+-
+sstream
+-
+fstream
+-
+vector
+-
+time.h
+-
+
