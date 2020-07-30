@@ -171,6 +171,19 @@ class NewLineFormatItem : public LogFormatter::FormatItem
 		}
 };
 
+
+class TabFormatItem : public LogFormatter::FormatItem
+{
+	public:
+		TabFormatItem (const std::string& str = "") {}
+		void format( std::ostream& os,std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override
+		{
+			os << "\t";
+		}
+	private:
+		std::string m_string;
+};
+
 LogEvent::LogEvent(const char* file, int32_t line, uint32_t elapse
                                  ,uint32_t thread_id, uint32_t fiber_id, uint64_t time)
 :
@@ -190,7 +203,9 @@ Logger::Logger(const std::string& name)
 	: m_name(name)
 	  ,m_level(LogLevel::DEBUG){
 
-	m_formatter.reset(new LogFormatter("%d [%p] <%f:%l>     %m %n"));
+	//m_formatter.reset(new LogFormatter("%d {%Y-%m-%d  %H:%M}%T[%p]%T%f:%l%T%m%n"));
+	m_formatter.reset(new LogFormatter("%d%T%t%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
+	//m_formatter.reset(new LogFormatter("%d [%p]  <%f:%l>  %m %n"));
 }
 
 void Logger::addAppender ( LogAppender::ptr appender )
@@ -423,6 +438,8 @@ void LogFormatter::init()
 		XX(d,DateTimeFormatItem),
 		XX(f,FilenameFormatItem),
 		XX(l,LineFormatItem),
+		XX(T,TabFormatItem),
+		XX(F,FiberIdFormatItem),
 
 #undef XX
 
