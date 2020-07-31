@@ -328,6 +328,7 @@ FileLogAppender::FileLogAppender ( const std::string& filename)
 
 void FileLogAppender::log(std::shared_ptr<Logger> logger,  LogLevel::Level level,LogEvent::ptr event)
 {
+
 	if( level >= m_level)
 	{
 		m_filestream << m_formatter->format(logger, level, event);
@@ -360,8 +361,6 @@ LogFormatter::LogFormatter( const std::string& pattern)
 	: m_pattern(pattern)
 {
 	init();
-
-
 }
 
 std::string LogFormatter::format(std::shared_ptr<Logger> logger,  LogLevel::Level level , LogEvent::ptr event)

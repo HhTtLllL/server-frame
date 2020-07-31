@@ -134,10 +134,11 @@ class LogEvent
 		uint32_t m_threadId = 0;     //线程 id
 		uint32_t m_fiberId = 0;       //协程  id
 		uint64_t m_time;             //时间戳
-		std::stringstream m_ss;       //消息
+		std::stringstream m_ss;       // 线程消息题流
 
-
+		//目标日志器
 		std::shared_ptr<Logger> m_logger;
+		// 这条日志的 日志级别
 		LogLevel::Level m_level;
 
 
@@ -169,23 +170,26 @@ public:
 	typedef std::shared_ptr<LogFormatter> ptr;
 
 	LogFormatter(const std::string& pattern);
-
 	std::string format(LogEvent::ptr event);
-
+	
+	//将 LogEvent 格式化成字符串
 	std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level , LogEvent::ptr event);
 
 public:
+	//具体日志格式项
 	class FormatItem
 	{
 		public:
 			typedef std::shared_ptr<FormatItem> ptr;
 			virtual ~FormatItem( ) {}
+			//将对应的日志格式内容写入到 os
 			virtual void format(std::ostream& os,std::shared_ptr<Logger> logger,  LogLevel::Level level, LogEvent::ptr event) = 0;
 	};
 	void init();
 
 private:
 	std::string m_pattern;
+	//通过日志格式解析出来的 FormatItem,支持扩展
 	std::vector<FormatItem::ptr> m_items;
 
 
@@ -198,7 +202,8 @@ class LogAppender
 	public:
 		typedef std::shared_ptr<LogAppender> ptr;
 		virtual ~LogAppender( ) {}
-
+	
+		//将日志输出到对应的落地点
 		virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level,LogEvent::ptr event) = 0;
 
 		void setFormatter(LogFormatter::ptr val) {m_formatter = val; }
@@ -221,12 +226,17 @@ class Logger : public std::enable_shared_from_this<Logger>
 
 		Logger(const std::string& name = "root");
 
+		//写入日志
 		void log( LogLevel::Level  level,LogEvent::ptr event);
-
+		//写debug 日志
 		void debug(LogEvent::ptr event);
+		//写info 日志
 		void info(LogEvent::ptr event);
+		//写 warn 日志
 		void warn(LogEvent::ptr event);
+		//写 error 日志
 		void error(LogEvent::ptr event);
+		//写 fatal 日志
 		void fatal(LogEvent::ptr event);
 		
 		void addAppender ( LogAppender::ptr appender );
@@ -242,7 +252,7 @@ class Logger : public std::enable_shared_from_this<Logger>
 	private:
 		std::string m_name;    //日志名称
 		LogLevel::Level m_level;  //满足日志级别的会输出
-		std::list<LogAppender::ptr> m_appenders;  //Appeder 集合
+		std::list<LogAppender::ptr> m_appenders;  //输出地Appeder 集合
 		LogFormatter::ptr m_formatter;
 
 };
@@ -254,8 +264,6 @@ class StdoutLogAppender : public LogAppender
 		typedef std::shared_ptr<StdoutLogAppender> ptr;
 		void log(Logger::ptr logger, LogLevel::Level level,LogEvent::ptr event) override;
 	private:
-
-
 };
 
 
