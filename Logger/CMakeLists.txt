@@ -9,6 +9,7 @@ set( CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -g -std=c++11 -Wall -Wno-depr
 #把源码 放到 LIB_SRC目录下
 set(LIB_SRC
 	sylar/log.cpp
+	sylar/util.cpp
 	)
 
 

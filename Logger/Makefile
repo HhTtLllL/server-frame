@@ -166,6 +166,33 @@ sylar/log.cpp.s:
 	$(MAKE) -f CMakeFiles/sylar.dir/build.make CMakeFiles/sylar.dir/sylar/log.cpp.s
 .PHONY : sylar/log.cpp.s
 
+sylar/util.o: sylar/util.cpp.o
+
+.PHONY : sylar/util.o
+
+# target to build an object file
+sylar/util.cpp.o:
+	$(MAKE) -f CMakeFiles/sylar.dir/build.make CMakeFiles/sylar.dir/sylar/util.cpp.o
+.PHONY : sylar/util.cpp.o
+
+sylar/util.i: sylar/util.cpp.i
+
+.PHONY : sylar/util.i
+
+# target to preprocess a source file
+sylar/util.cpp.i:
+	$(MAKE) -f CMakeFiles/sylar.dir/build.make CMakeFiles/sylar.dir/sylar/util.cpp.i
+.PHONY : sylar/util.cpp.i
+
+sylar/util.s: sylar/util.cpp.s
+
+.PHONY : sylar/util.s
+
+# target to generate assembly for a file
+sylar/util.cpp.s:
+	$(MAKE) -f CMakeFiles/sylar.dir/build.make CMakeFiles/sylar.dir/sylar/util.cpp.s
+.PHONY : sylar/util.cpp.s
+
 tests/test.o: tests/test.cc.o
 
 .PHONY : tests/test.o
@@ -206,6 +233,9 @@ help:
 	@echo "... sylar/log.o"
 	@echo "... sylar/log.i"
 	@echo "... sylar/log.s"
+	@echo "... sylar/util.o"
+	@echo "... sylar/util.i"
+	@echo "... sylar/util.s"
 	@echo "... tests/test.o"
 	@echo "... tests/test.i"
 	@echo "... tests/test.s"

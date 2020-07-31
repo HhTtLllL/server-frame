@@ -10,7 +10,8 @@
 #include <vector>
 #include <time.h>
 #include <stdarg.h>
-
+#include <map>
+#include "singleton.h"
 
 #define SYLAR_LOG_LEVEL(logger, level) \
     if(logger->getLevel() <= level) \
@@ -202,6 +203,8 @@ class LogAppender
 
 		void setFormatter(LogFormatter::ptr val) {m_formatter = val; }
 		LogFormatter::ptr getFormatter( ) const {  return m_formatter; }
+		LogLevel::Level getLevel() const { return m_level; }
+		void setLevel (LogLevel::Level val) { m_level = val; }
 	protected:
 		LogLevel::Level m_level = LogLevel::DEBUG;
 		LogFormatter::ptr m_formatter;
@@ -234,6 +237,7 @@ class Logger : public std::enable_shared_from_this<Logger>
 		void setLevel( LogLevel::Level val) {m_level = val; }
 
 		const std::string& getName() const { return m_name; }
+
 
 	private:
 		std::string m_name;    //日志名称
@@ -273,6 +277,21 @@ class FileLogAppender : public LogAppender
 };
 
 
+class LoggerManager
+{
+	public:
+		LoggerManager();
+		Logger::ptr getLogger(const std::string& name);
+
+
+		void init();
+	private:
+		std::map<std::string,Logger::ptr> m_loggers;
+		Logger::ptr m_root;
+
+};
+
+typedef sylar::Singleton<LoggerManager> LoggerMgr;
 	
 }
 #endif

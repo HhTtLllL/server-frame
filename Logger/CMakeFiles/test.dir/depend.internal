@@ -3,4 +3,6 @@
 
 CMakeFiles/test.dir/tests/test.cc.o
  /home/tt/server-frame/Logger/sylar/log.h
+ /home/tt/server-frame/Logger/sylar/singleton.h
+ /home/tt/server-frame/Logger/sylar/util.h
  /home/tt/server-frame/Logger/tests/test.cc
