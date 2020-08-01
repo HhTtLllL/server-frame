@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <map>
 #include "singleton.h"
+#include "util.h"
 
 #define SYLAR_LOG_LEVEL(logger, level) \
     if(logger->getLevel() <= level) \
@@ -74,7 +75,7 @@
  */
 #define SYLAR_LOG_NAME(name) sylar::LoggerMgr::GetInstance()->getLogger(name)
 
-
+#define SYLAR_LOG_ROOT() sylar::LoggerMgr::GetInstance()->getRoot()
 
 
 
