@@ -258,6 +258,47 @@ public:
 };
 
 
+//  支持umap
+template<class T>
+class LexicalCast<std::string, std::unordered_map<std::string, T> >{
+public:
+	std::unordered_map<std::string, T> operator() (const std::string& v){
+		YAML::Node node = YAML::Load(v);
+
+		typename std::unordered_map<std::string, T> vec;
+		std::stringstream ss;
+
+		for(auto it = node.begin() ; 
+				it != node.end() ; ++it){
+			ss.str("");
+			ss << it->second;
+			vec.insert(std::make_pair(it->first.Scalar(), LexicalCast<std::string, T>() (ss.str())));
+		}
+
+		return vec;
+	}
+
+};
+
+template<class T>
+class LexicalCast<std::unordered_map<std::string, T> , std::string>{
+public:
+	std::string operator() (const std::unordered_map<std::string, T>& v){
+		YAML::Node node;
+
+		for(auto& i : v){
+			node[i.first] = YAML::Load(LexicalCast<T, std::string>()(i.second));
+		}
+
+		std::stringstream ss;
+		ss << node;
+		
+		return ss.str();
+	}
+
+};
+
+
 
 
 //配置项的具体实现类
