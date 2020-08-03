@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
+#include <yaml-cpp/yaml.h>
 #include "./log.h"
 
 
@@ -20,6 +21,7 @@ public:
 	ConfigVarBase(const std::string& name, const std::string& description = "")
 		:m_name(name),
 		m_description(description) {
+			std::transform(m_name.begin(),m_name.end(),m_name.begin(),::tolower);
 
 		}
 
@@ -39,10 +41,62 @@ public:
 protected:
 	std::string m_name;//配置名称
 	std::string m_description; //配置描述
+
 };
 
-//配置项的具体实现类
+//F from_type, T to_type
+template<class F, class T>
+class LexicalCast{
+public:
+	T operator() (const F& v){
+		return boost::lexical_cast<T>(v);
+	}
+
+};
+
 template<class T>
+class LexicalCast<std::string, std::vector<T> >{
+public:
+	std::vector<T> operator() (const std::string& v){
+		YAML::Node node = YAML::Load(v);
+
+		typename std::vector<T> vec;
+		std::stringstream ss;
+
+		for(size_t i = 0; i < node.size() ; i ++ ){
+			ss.str("");
+			ss << node[i];
+			vec.push_back(LexicalCast<std::string, T> () (ss.str()));
+		}
+
+		return vec;
+	}
+
+};
+
+template<class T>
+class LexicalCast<std::vector<T> , std::string>{
+public:
+	std::string operator() (const std::vector<T>& v){
+		YAML::Node node;
+
+		for(auto& i : v){
+			node.push_back(YAML::Load(LexicalCast<T, std::string>() (i)));
+		}
+
+		std::stringstream ss;
+		ss << node;
+
+		return ss.str();
+	}
+
+};
+
+
+
+//配置项的具体实现类
+template<class T, class FromStr = LexicalCast<std::string,T>,
+	class ToStr = LexicalCast<T,std::string> >
 class ConfigVar : public ConfigVarBase{
 
 public:
@@ -57,7 +111,8 @@ public:
 	
 		try{
 			//在这里捕捉类型转化的异常 把m_val 类型转化为string 类型
-			return boost::lexical_cast<std::string>(m_val); //类型转化
+			//return boost::lexical_cast<std::string>(m_val); //类型转化
+			return ToStr() (m_val);
 		}catch(std::exception& e){
 			SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "configVar::toString exception" << e.what() << " convert: " << typeid(m_val).name() << "to string";
 
@@ -71,7 +126,8 @@ public:
 		
 		try{
 			//把string 类型转换为我们需要的类型 模板T 类型
-			m_val = boost::lexical_cast<T>(val);
+			//m_val = boost::lexical_cast<T>(val);
+			setValue(FromStr() (val));
 
 		}catch(std::exception& e){
 			SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "configVar::toString exception" << e.what() << " convert: " << typeid(m_val).name() << "to string";
@@ -109,7 +165,7 @@ public:
 			return tmp;
 		}
 
-		if(name.find_first_not_of("abcdefghigklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._0123456789") != std::string::npos){
+		if(name.find_first_not_of("abcdefghigklmnopqrstuvwxyz._0123456789") != std::string::npos){
 			SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "Lookup name invalid " << name;
 			throw std::invalid_argument(name);
 		
@@ -132,16 +188,15 @@ public:
 	
 	}
 
+	static void LoadFromYaml(const YAML::Node& root);
+	static ConfigVarBase::ptr LookupBase(const std::string& name);
+
+
+
 private:
 	static ConfigVarMap s_datas;
 
 };
-
-
-
-
-
-
 
 
 
