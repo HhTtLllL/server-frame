@@ -47,7 +47,7 @@ public:
 	virtual std::string toString() = 0; //序列化
 	//从字符串初始化值
 	virtual bool fromString (const std::string& val) = 0;//反序列化
-
+	virtual std::string getTypeName() const  = 0;
 
 protected:
 	std::string m_name;//配置名称
@@ -367,6 +367,7 @@ public:
 	const T getValue() const { return m_val; }
 	//设置当前参数 的值
 	void setValue(const T& val) { m_val = val ; } 
+	std::string getTypeName() const override { return typeid(T).name(); }
 private:
 	T m_val;
 };
@@ -396,10 +397,17 @@ public:
 	template<class T>
 	static typename ConfigVar<T>::ptr Lookup(const std::string& name,
 			const T& default_value, const std::string& description = ""){
-		auto tmp = Lookup<T>(name);
-		if(tmp){
-			SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "Lookup name" << name << "exists";
-			return tmp;
+		auto it = s_datas.find(name);
+		if(it != s_datas.end()){
+			auto tmp = std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
+			if(tmp){
+				SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "Lookup name" << name << "exists";
+				return tmp;
+			}else{
+		
+				SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << " LookUp name = " << name << "existe but type not" << typeid(T).name() << "real_type = " << it->second->getTypeName() << " " << it->second->toString();  
+				return nullptr;
+			}
 		}
 		// 检查名称中是否包含非法字符,有则抛出异常
 		if(name.find_first_not_of("abcdefghigklmnopqrstuvwxyz._0123456789") != std::string::npos){
