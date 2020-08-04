@@ -76,8 +76,8 @@
 #define SYLAR_LOG_NAME(name) sylar::LoggerMgr::GetInstance()->getLogger(name)
 
 #define SYLAR_LOG_ROOT() sylar::LoggerMgr::GetInstance()->getRoot()
-
-
+//#define SYLAR_LOG_NAME(name) sylar::LoggerMgr::GetInstance()->getLogger(name)
+#define SYLAR_LOG_NAME(name) sylar::LoggerMgr::GetInstance()->getLogger(name)
 
 
 
@@ -85,7 +85,7 @@ namespace sylar
 {
 
 class Logger;
-
+class LoggerManager;
 
 //日志级别
 class LogLevel 
@@ -102,6 +102,7 @@ class LogLevel
 		};
 
 		static const char* ToString(LogLevel::Level level);
+		static LogLevel::Level FromString(const std::string& str);
 };
 
 	//日志事件
@@ -188,10 +189,13 @@ public:
 	};
 	void init();
 
+	bool isError() const { return m_error; }
+
 private:
 	std::string m_pattern;
 	//通过日志格式解析出来的 FormatItem,支持扩展
 	std::vector<FormatItem::ptr> m_items;
+	bool m_error = false;
 
 
 
@@ -220,8 +224,8 @@ class LogAppender
 
 
 //日志器
-class Logger : public std::enable_shared_from_this<Logger>
-{
+class Logger : public std::enable_shared_from_this<Logger>{
+friend class LoggerManager;
 	public:
 		typedef std::shared_ptr<Logger> ptr;
 
@@ -242,12 +246,17 @@ class Logger : public std::enable_shared_from_this<Logger>
 		
 		void addAppender ( LogAppender::ptr appender );
 		void delAppender ( LogAppender::ptr appender );
-
+		void clearAppenders();
 
 		LogLevel::Level getLevel( ) const {return m_level ; }
 		void setLevel( LogLevel::Level val) {m_level = val; }
 
 		const std::string& getName() const { return m_name; }
+
+		void setFormatter(LogFormatter::ptr val);
+		void setFormatter(const std::string& val);
+
+		LogFormatter::ptr getFormatter();
 
 
 	private:
@@ -255,6 +264,8 @@ class Logger : public std::enable_shared_from_this<Logger>
 		LogLevel::Level m_level;  //满足日志级别的会输出
 		std::list<LogAppender::ptr> m_appenders;  //输出地Appeder 集合
 		LogFormatter::ptr m_formatter;
+
+		Logger::ptr m_root;
 
 };
 
@@ -293,7 +304,7 @@ class LoggerManager
 		Logger::ptr getLogger(const std::string& name);
 
 
-		void init();
+		//void init();
 
 		Logger::ptr getRoot() const  { return m_root; } 
 
