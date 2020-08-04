@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
+#include <iostream>
 
 
 
@@ -428,60 +429,64 @@ public:
 	 * 如果参数名包括非法字符，则抛出异常
 	 *
 	 * */
-	template<class T>
-	static typename ConfigVar<T>::ptr Lookup(const std::string& name,
-			const T& default_value, const std::string& description = ""){
-		//auto it = s_datas.find(name);
-		auto it = GetDatas().find(name);
-		if(it != GetDatas().end()){
-			auto tmp = std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
-			if(tmp){
-				SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "Lookup name" << name << "exists";
-				return tmp;
-			}else{
-		
-				SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << " LookUp name = " << name << "existe but type not" << typeid(T).name() << "real_type = " << it->second->getTypeName() << " " << it->second->toString();  
-				return nullptr;
-			}
-		}
-		// 检查名称中是否包含非法字符,有则抛出异常
-		if(name.find_first_not_of("abcdefghigklmnopqrstuvwxyz._0123456789") != std::string::npos){
-			SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "Lookup name invalid " << name;
-			throw std::invalid_argument(name);
-		}
-
-		//符合以上条件则 向map容器中插入该值
-		typename ConfigVar<T>::ptr v(new ConfigVar<T>(name, default_value,description));
-		//s_datas[name] = v;
-		GetDatas()[name] = v;
-
-		return v;
-	}
 	
-	//获取对应名称的配置项，用来获取上面函数创建的配置项
-	/*
-			查找配置参数
-			name 配置参数名称
-			返回配置参数名为name 的配置参数, 没找到则返回 nullptr
-	*/
-	template<class T>
-	static typename ConfigVar<T>::ptr Lookup(const std::string& name){
-		auto it = GetDatas().find(name);
-		if(it == GetDatas().end()){
+template<class T>
+static typename ConfigVar<T>::ptr Lookup(const std::string& name,
+		const T& default_value, const std::string& description = ""){
+	//auto it = s_datas.find(name);
+	auto it = GetDatas().find(name);
+	if(it != GetDatas().end()){
+		  auto tmp = std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
+		//auto tmp = std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
+		if(tmp){
+			SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "Lookup name" << name << "exists";
+			return tmp;
+			std::cout <<  "222" << std::endl;
+		}else{
+			std::cout << "1111" << std::endl;
+	
+			SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << " LookUp name = " << name << "existe but type not" << typeid(T).name() << "real_type = " << it->second->getTypeName() << " " << it->second->toString();  
 			return nullptr;
 		}
-
-		return std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
 	}
-	//加载配置文件，加载一个目录下面的所有YAML 文件，支持多文件，不同的配置项可以分开文件定义
-	//YAML::Node 初始化配置模块
-	static void LoadFromYaml(const YAML::Node& root);
-	
-	/*查找配置参数,返回配置参数的基类
-	 * name 配置参数名称
-	 *
-	 * */
-	static ConfigVarBase::ptr LookupBase(const std::string& name);
+	// 检查名称中是否包含非法字符,有则抛出异常
+	if(name.find_first_not_of("abcdefghigklmnopqrstuvwxyz._0123456789") != std::string::npos){
+		SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "Lookup name invalid " << name;
+		throw std::invalid_argument(name);
+	}
+
+		//符合以上条件则 向map容器中插入该值
+	typename ConfigVar<T>::ptr v(new ConfigVar<T>(name, default_value,description));
+	//s_datas[name] = v;
+	GetDatas()[name] = v;
+
+	return v;
+}
+
+//获取对应名称的配置项，用来获取上面函数创建的配置项
+/*
+		查找配置参数
+		name 配置参数名称
+		返回配置参数名为name 的配置参数, 没找到则返回 nullptr
+*/
+template<class T>
+static typename ConfigVar<T>::ptr Lookup(const std::string& name){
+	auto it = GetDatas().find(name);
+	if(it == GetDatas().end()){
+		return nullptr;
+	}
+
+	return std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
+}
+//加载配置文件，加载一个目录下面的所有YAML 文件，支持多文件，不同的配置项可以分开文件定义
+//YAML::Node 初始化配置模块
+static void LoadFromYaml(const YAML::Node& root);
+
+/*查找配置参数,返回配置参数的基类
+ * name 配置参数名称
+ *
+ * */
+static ConfigVarBase::ptr LookupBase(const std::string& name);
 
 private:
 	static ConfigVarMap& GetDatas(){

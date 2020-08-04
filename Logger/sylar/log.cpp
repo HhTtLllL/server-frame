@@ -42,16 +42,23 @@ const char* LogLevel::ToString(LogLevel::Level level)
 }
 
 LogLevel::Level LogLevel::FromString(const std::string& str){
-#define XX(name)\
-	if(str == #name){\
-		return LogLevel::name;\
+#define XX(level, v)\
+	if(str == #v){\
+		return LogLevel::level;\
 	}	
 
-	XX(DEBUG);
-	XX(INFO);
-	XX(WARN);
-	XX(ERROR);
-	XX(FATAL);
+	XX(DEBUG,debug);
+	XX(INFO,info);
+	XX(WARN,warn);
+	XX(ERROR,error);
+	XX(FATAL,fatal);
+
+
+	XX(DEBUG,DEBUG);
+	XX(INFO,INFO);
+	XX(WARN,WARN);
+	XX(ERROR,ERROR);
+	XX(FATAL,FATAL);
 
 
 	return LogLevel::UNKNOW;
@@ -280,7 +287,6 @@ Logger::Logger(const std::string& name)
 void Logger::setFormatter(LogFormatter::ptr val){
 
 	m_formatter = val;
-
 }
 void Logger::setFormatter(const std::string& val){
 	sylar::LogFormatter::ptr new_val(new sylar::LogFormatter(val));
@@ -291,6 +297,28 @@ void Logger::setFormatter(const std::string& val){
 
 	m_formatter = new_val;
 }
+
+std::string Logger::toYamlString(){
+	
+	YAML::Node node;
+	node["name"] = m_name;
+	if(m_level != LogLevel::UNKNOW){
+		node["level"] = LogLevel::ToString(m_level);
+	}
+	if(m_formatter){
+		node["formatter"] = m_formatter->getPattern();
+	}
+
+	for(auto& i : m_appenders){
+		node["appenders"].push_back(YAML::Load(i->toYamlString()));
+	}
+
+	std::stringstream ss;
+	ss << node;
+
+	return ss.str();
+}
+
 LogFormatter::ptr Logger::getFormatter(){
 
 	return m_formatter;
@@ -402,6 +430,24 @@ bool FileLogAppender::reopen()
 
 	return !!m_filestream;
 }
+std::string FileLogAppender::toYamlString(){
+	YAML::Node node;
+	node["type"] = "FileLogAppender";
+
+	node["file"] = m_filename;
+	if(m_level != LogLevel::UNKNOW){
+		node["level"] = LogLevel::ToString(m_level);
+	}
+
+	if(m_formatter){
+		node["formatter"] = m_formatter->getPattern();
+	
+	}
+	std::stringstream ss;
+	ss << node;
+
+	return ss.str();
+}
 
 void StdoutLogAppender::log(std::shared_ptr<Logger> logger,  LogLevel::Level level,LogEvent::ptr event)
 {
@@ -411,6 +457,22 @@ void StdoutLogAppender::log(std::shared_ptr<Logger> logger,  LogLevel::Level lev
 	}
 }
 
+std::string StdoutLogAppender::toYamlString(){
+	YAML::Node node;
+	node["type"] = "StdoutLogAppender";
+
+	if(m_level != LogLevel::UNKNOW){
+		node["level"] = LogLevel::ToString(m_level);
+	}
+
+	if(m_formatter){
+		node["formatter"] = m_formatter->getPattern();
+	}
+	std::stringstream ss;
+	ss << node;
+
+	return ss.str();
+}
 LogFormatter::LogFormatter( const std::string& pattern)
 	: m_pattern(pattern)
 {
@@ -577,8 +639,30 @@ LoggerManager::LoggerManager()
 	m_root.reset(new Logger);
 	m_root->addAppender(LogAppender::ptr(new StdoutLogAppender));
 
+	m_loggers[m_root->m_name] = m_root;
+
 	//init();
 }
+
+/*
+std::string LoggerManager::toYamlString(){
+	
+	YAML::Node node;
+	node["name"] = m_name;
+	node["level"] = LogLevel::ToString(m_level);
+	if(!m_formatter.empty()){
+		node["formatter"] = m_formatter;
+	}
+
+	for(auto& i : m_appenders){
+		node["appenders"].push_back(YAML::Load(i->toYamlString()));
+	}
+
+	std::stringstream ss;
+	ss << node;
+
+	return ss.str();
+}*/
 
 Logger::ptr LoggerManager::getLogger(const std::string& name)
 {
@@ -624,7 +708,8 @@ struct LogDefine{
 };
 
 template<>
-class LexicalCast<std::string, LogDefine> {
+class LexicalCast<std::string, LogDefine>  {
+//class LexicalCast<s, LogDefine> {
 public:
     LogDefine operator()(const std::string& v) {
         YAML::Node n = YAML::Load(v);
@@ -726,7 +811,6 @@ struct LogIniter{
 	LogIniter(){
 		g_log_defines->addListener(0xF1E231, [](const std::set<LogDefine>& old_value,
 					const std::set<LogDefine>& new_value){
-
 			SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "on_logger_conf_changed";
 			//新增
 			for(auto& i : new_value){
@@ -734,12 +818,14 @@ struct LogIniter{
 				sylar::Logger::ptr logger;
 				if(it == old_value.end()){
 					 //新增logger
-					 logger.reset(new sylar::Logger(i.name));
+					 //logger.reset(new sylar::Logger(i.name));
+					 logger = SYLAR_LOG_NAME(i.name);
 				}else{
 					if(!(i == *it)){
 						//修改的 logger
 						//先找到这个logger  
-						logger = SYLAR_LOG_NAME(i.name);
+	//					logger = SYLAR_LOG_NAME(i.name);
+					
 					}
 				}
 
@@ -777,5 +863,25 @@ struct LogIniter{
 	
 	}
 };
+
+static LogIniter __log_init;
+
+std::string LoggerManager::toYamlString(){
+
+	YAML::Node node;
+
+	for(auto& i : m_loggers){
+
+		node.push_back(YAML::Load(i.second->toYamlString()));
+	}
+
+	std::stringstream ss;
+	
+	ss << node;
+
+	return ss.str();
+
+
+}
 
 }
