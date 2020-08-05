@@ -106,6 +106,17 @@ std::stringstream& LogEventWrap::getSS()
 	return m_event->getSS();
 }
 
+void LogAppender::setFormatter(LogFormatter::ptr val){
+	m_formatter = val;
+
+	if(m_formatter){
+		m_hasFormatter = true;
+	}else{
+		m_hasFormatter = false;
+	}
+
+}
+
 
 class MessageFormatItem : public LogFormatter::FormatItem
 {
@@ -287,6 +298,12 @@ Logger::Logger(const std::string& name)
 void Logger::setFormatter(LogFormatter::ptr val){
 
 	m_formatter = val;
+
+	for(auto& i : m_appenders){
+		if(!i->m_hasFormatter){
+			i->m_formatter = m_formatter;
+		}
+	}
 }
 void Logger::setFormatter(const std::string& val){
 	sylar::LogFormatter::ptr new_val(new sylar::LogFormatter(val));
@@ -295,7 +312,8 @@ void Logger::setFormatter(const std::string& val){
 		return;
 	}
 
-	m_formatter = new_val;
+	//m_formatter = new_val;
+	setFormatter(new_val);
 }
 
 std::string Logger::toYamlString(){
@@ -328,7 +346,7 @@ void Logger::addAppender ( LogAppender::ptr appender )
 {
 	if(!appender->getFormatter())
 	{
-		appender->setFormatter(m_formatter);
+		appender->m_formatter = m_formatter;
 
 	}
 	m_appenders.push_back(appender);
@@ -439,7 +457,7 @@ std::string FileLogAppender::toYamlString(){
 		node["level"] = LogLevel::ToString(m_level);
 	}
 
-	if(m_formatter){
+	if(m_formatter && m_hasFormatter){
 		node["formatter"] = m_formatter->getPattern();
 	
 	}
@@ -465,7 +483,7 @@ std::string StdoutLogAppender::toYamlString(){
 		node["level"] = LogLevel::ToString(m_level);
 	}
 
-	if(m_formatter){
+	if(m_formatter && m_hasFormatter){
 		node["formatter"] = m_formatter->getPattern();
 	}
 	std::stringstream ss;
@@ -844,6 +862,16 @@ struct LogIniter{
 					}
 
 					ap->setLevel(a.level);
+
+					if(!a.formatter.empty()){
+						LogFormatter::ptr fmt(new LogFormatter(a.formatter));
+						if(!fmt->isError()){
+							ap->setFormatter(fmt);
+						}else{
+							std::cout << "log.name = "<< i.name << "appender type " << a.type << " formatter = " << a.formatter
+								<< " is invalid " << std::endl;
+						}
+					}
 					logger->addAppender(ap);
 				}
 			}
